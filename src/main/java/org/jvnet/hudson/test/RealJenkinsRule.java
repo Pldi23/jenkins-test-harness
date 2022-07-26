@@ -620,7 +620,8 @@ public final class RealJenkinsRule implements TestRule {
         if (!proc.waitFor(60, TimeUnit.SECONDS) ) {
             System.err.println("Jenkins failed to stop within 60 seconds, attempting to kill the Jenkins process");
             proc.destroyForcibly();
-            throw new AssertionError("Jenkins failed to terminate within 60 seconds");
+            proc = null;
+            return;
         }
         int exitValue = proc.exitValue();
         if (exitValue != 0) {
