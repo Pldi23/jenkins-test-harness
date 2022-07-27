@@ -387,9 +387,16 @@ public final class RealJenkinsRule implements TestRule {
                     }
                     System.out.println("Will load plugins: " + Stream.of(plugins.list()).filter(n -> n.matches(".+[.][hj]p[il]")).sorted().collect(Collectors.joining(" ")));
                     base.evaluate();
+                } catch (Throwable t) {
+                    LOGGER.log(Level.WARNING, "Something went wrong", t);
+                    throw t;
                 } finally {
-                    if (proc != null) {
-                        stopJenkins();
+                    try {
+                        if (proc != null) {
+                            stopJenkins();
+                        }
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, "Error during stop Jenkins", e);
                     }
                     try {
                         tmp.dispose();
@@ -609,6 +616,8 @@ public final class RealJenkinsRule implements TestRule {
     }
 
     private static int readPort(File portFile) throws IOException {
+        LOGGER.log(Level.INFO, () -> String.format("Using port value from file: '%s'", portFile.getAbsolutePath()));
+        LOGGER.log(Level.INFO, () -> String.format("Can we read it: '%s'", portFile.canRead()));
         String s = FileUtils.readFileToString(portFile, StandardCharsets.UTF_8);
         try {
             return Integer.parseInt(s);
