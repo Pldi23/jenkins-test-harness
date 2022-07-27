@@ -186,6 +186,8 @@ public final class RealJenkinsRule implements TestRule {
     private static final Pattern SNAPSHOT_INDEX_JELLY = Pattern.compile("(file:/.+/target)/classes/index.jelly");
     private transient boolean supportsPortFileName;
 
+    private volatile boolean stopping = false;
+
     /**
      * Add some plugins to the test classpath.
      *
@@ -615,19 +617,31 @@ public final class RealJenkinsRule implements TestRule {
         }
     }
 
+    /*
+     * Stops Jenkins and releases any system resources associated
+     * with it. If Jenkins is already stopped then invoking this
+     * method has no effect.
+     */
     public void stopJenkins() throws Throwable {
-        endpoint("exit").openStream().close();
-        if (!proc.waitFor(60, TimeUnit.SECONDS) ) {
-            System.err.println("Jenkins failed to stop within 60 seconds, attempting to kill the Jenkins process");
-            proc.destroyForcibly();
-            proc = null;
-            return;
+        if (!stopping) {
+            stopping = true;
+            endpoint("exit").openStream().close();
         }
-        int exitValue = proc.exitValue();
-        if (exitValue != 0) {
-            throw new AssertionError("nonzero exit code: " + exitValue);
+        if (proc != null) {
+            try {
+                if (!proc.waitFor(60, TimeUnit.SECONDS) ) {
+                    System.err.println("Jenkins failed to stop within 60 seconds, attempting to kill the Jenkins process");
+                    proc.destroyForcibly();
+                    throw new AssertionError("Jenkins failed to terminate within 60 seconds");
+                }
+                int exitValue = proc.exitValue();
+                if (exitValue != 0) {
+                    throw new AssertionError("nonzero exit code: " + exitValue);
+                }
+            } finally {
+                proc = null;
+            }
         }
-        proc = null;
     }
 
     public void runRemotely(Step s) throws Throwable {
