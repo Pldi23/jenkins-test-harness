@@ -13,7 +13,9 @@ public class MyJSListener extends DefaultJavaScriptErrorListener {
     @Override
     public void scriptException(final HtmlPage page, final ScriptException scriptException) {
         if (LOG.isErrorEnabled()) {
-            LOG.error(page);
+            LOG.error(page.asNormalizedText());
+            LOG.error(page.asXml());
+            LOG.error(page.getBody().toString());
             LOG.error(scriptException.getScriptSourceCode());
             LOG.error(scriptException.getFailingColumnNumber());
             LOG.error(scriptException.getFailingLine());
