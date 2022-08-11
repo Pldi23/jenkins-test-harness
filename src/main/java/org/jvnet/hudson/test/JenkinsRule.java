@@ -1391,6 +1391,13 @@ public class JenkinsRule implements TestRule, MethodRule, RootAction {
         submit(createWebClient().goTo("configure").getFormByName("config"));
     }
 
+    public void configRoundtrip(boolean withMyFilter) throws Exception {
+        try(WebClient webClient = createWebClient()) {
+            webClient.setJavaScriptErrorListener(new MyJSListener());
+            submit(webClient.goTo("configure").getFormByName("config"));
+        }
+    }
+
     /**
      * Loads a configuration page and submits it without any modifications, to
      * perform a round-trip configuration test.
